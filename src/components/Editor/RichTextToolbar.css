@@ -1,0 +1,74 @@
+.rich-text-toolbar {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.5rem 1rem;
+    background: rgba(0, 0, 0, 0.3);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+    flex-shrink: 0;
+}
+
+.toolbar-group {
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+}
+
+.toolbar-button {
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: transparent;
+    border: 1px solid transparent;
+    border-radius: 6px;
+    color: rgba(255, 255, 255, 0.6);
+    cursor: pointer;
+    transition: all 0.15s ease;
+}
+
+.toolbar-button:hover {
+    background: rgba(255, 255, 255, 0.1);
+    color: rgba(255, 255, 255, 0.9);
+}
+
+.toolbar-button.active {
+    background: rgba(233, 69, 96, 0.2);
+    border-color: rgba(233, 69, 96, 0.4);
+    color: #e94560;
+}
+
+.toolbar-icon {
+    font-size: 0.875rem;
+    font-weight: 500;
+}
+
+.toolbar-icon.italic {
+    font-style: italic;
+    font-family: 'Crimson Pro', 'Georgia', serif;
+    font-size: 1rem;
+}
+
+.toolbar-icon.center-align {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    line-height: 0.3;
+    font-size: 0.625rem;
+}
+
+.toolbar-icon.right-align {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    line-height: 0.3;
+    font-size: 0.625rem;
+}
+
+.toolbar-divider {
+    width: 1px;
+    height: 20px;
+    background: rgba(255, 255, 255, 0.15);
+    margin: 0 0.25rem;
+}

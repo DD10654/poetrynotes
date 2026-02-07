@@ -1,0 +1,29 @@
+.note-connections-svg {
+    position: absolute;
+    top: 0;
+    left: 0;
+    pointer-events: none;
+    z-index: 0;
+    overflow: visible;
+}
+
+.connection-line {
+    stroke-width: 2;
+    fill: none;
+    transition: stroke 0.2s ease;
+}
+
+.connection-line.note-to-note {
+    stroke: rgba(255, 193, 7, 0.4);
+    stroke-dasharray: none;
+}
+
+.connection-line.note-to-text {
+    stroke: rgba(233, 69, 96, 0.3);
+    stroke-dasharray: 4 4;
+}
+
+/* Hover effect on parent note would highlight the line */
+.connection-line:hover {
+    stroke-width: 3;
+}
