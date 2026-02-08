@@ -37,6 +37,9 @@ export interface Note {
   linkedNotes: string[]; // note IDs
   createdAt: string;
   lastModified: string;
+  type?: 'default' | 'context' | 'personal-response';
+  isCollapsed?: boolean;
+  width?: number;
 }
 
 export interface Connection {
@@ -65,13 +68,14 @@ export type ProjectAction =
   | { type: 'ADD_HIGHLIGHT'; payload: Highlight }
   | { type: 'REMOVE_HIGHLIGHT'; payload: string }
   | { type: 'ADD_NOTE'; payload: Note }
-  | { type: 'UPDATE_NOTE'; payload: { id: string; content: string } }
+  | { type: 'UPDATE_NOTE'; payload: { id: string; content?: string; isCollapsed?: boolean; width?: number } }
   | { type: 'UPDATE_NOTE_POSITION'; payload: { id: string; position: NotePosition } }
   | { type: 'DELETE_NOTE'; payload: string }
   | { type: 'LINK_NOTES'; payload: { fromId: string; toId: string } }
   | { type: 'UNLINK_NOTES'; payload: { fromId: string; toId: string } }
   | { type: 'ADD_CONNECTION'; payload: Connection }
-  | { type: 'REMOVE_CONNECTION'; payload: string };
+  | { type: 'REMOVE_CONNECTION'; payload: string }
+  | { type: 'TOGGLE_NOTE_COLLAPSE'; payload: string };
 
 // View state for UI interactions
 export interface ViewState {

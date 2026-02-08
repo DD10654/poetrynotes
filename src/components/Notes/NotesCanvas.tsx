@@ -170,6 +170,8 @@ export function NotesCanvas({ editorRef, zoomLevel }: NotesCanvasProps) {
                     onPositionChange={(x, y) => handlePositionChange(note.id, x, y)}
                     onContentChange={(content) => handleContentChange(note.id, content)}
                     onDelete={() => handleDeleteNote(note.id)}
+                    onToggleCollapse={() => dispatch({ type: 'TOGGLE_NOTE_COLLAPSE', payload: note.id })}
+                    onWidthChange={(width) => dispatch({ type: 'UPDATE_NOTE', payload: { id: note.id, width } })}
                 />
             ))}
 

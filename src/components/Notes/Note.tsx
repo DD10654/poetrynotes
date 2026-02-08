@@ -17,6 +17,8 @@ interface NoteProps {
     onContentChange: (content: string) => void;
     onAddConnectedNote: () => void;
     onDelete: () => void;
+    onToggleCollapse?: () => void;
+    onWidthChange?: (width: number) => void;
 }
 
 export function Note({
@@ -33,11 +35,16 @@ export function Note({
     onPositionChange,
     onContentChange,
     onDelete,
+    onToggleCollapse,
+    onWidthChange,
 }: NoteProps) {
     const noteRef = useRef<HTMLDivElement>(null);
     const textareaRef = useRef<HTMLTextAreaElement>(null);
     const [isDragging, setIsDragging] = useState(false);
+    const [isResizing, setIsResizing] = useState(false);
     const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 });
+    const [resizeStartWidth, setResizeStartWidth] = useState(0);
+    const [resizeStartX, setResizeStartX] = useState(0);
     const [localContent, setLocalContent] = useState(note.content);
 
     // Sync local content with prop
@@ -89,8 +96,8 @@ export function Note({
             const localX = (e.clientX - canvasRect.left) / zoomLevel;
             const localY = (e.clientY - canvasRect.top) / zoomLevel;
 
-            const newX = Math.max(0, localX - dragOffset.x);
-            const newY = Math.max(0, localY - dragOffset.y);
+            const newX = localX - dragOffset.x;
+            const newY = localY - dragOffset.y;
             onPositionChange(newX, newY);
         };
 
@@ -106,6 +113,39 @@ export function Note({
             document.removeEventListener('mouseup', handleMouseUp);
         };
     }, [isDragging, dragOffset, onPositionChange, zoomLevel]);
+
+    // Handle resizing
+    const handleResizeMouseDown = useCallback((e: React.MouseEvent) => {
+        e.preventDefault();
+        e.stopPropagation();
+        setIsResizing(true);
+        setResizeStartX(e.clientX);
+        setResizeStartWidth(note.width || 220);
+    }, [note.width]);
+
+    useEffect(() => {
+        if (!isResizing) return;
+
+        const handleMouseMove = (e: MouseEvent) => {
+            const deltaX = (e.clientX - resizeStartX) / zoomLevel;
+            const newWidth = Math.max(150, resizeStartWidth + deltaX);
+            if (onWidthChange) {
+                onWidthChange(newWidth);
+            }
+        };
+
+        const handleMouseUp = () => {
+            setIsResizing(false);
+        };
+
+        document.addEventListener('mousemove', handleMouseMove);
+        document.addEventListener('mouseup', handleMouseUp);
+
+        return () => {
+            document.removeEventListener('mousemove', handleMouseMove);
+            document.removeEventListener('mouseup', handleMouseUp);
+        };
+    }, [isResizing, resizeStartX, resizeStartWidth, zoomLevel, onWidthChange]);
 
     // Handle content change with debounce
     const handleContentChange = (e: ChangeEvent<HTMLTextAreaElement>) => {
@@ -133,15 +173,27 @@ export function Note({
         isLinkSource && 'link-source',
         isLinkTarget && 'link-target',
         isDragging && 'dragging',
+        note.isCollapsed && 'collapsed',
+        `note-type-${note.type || 'default'}`,
     ].filter(Boolean).join(' ');
+
+    const getNoteTitle = () => {
+        if (note.type === 'context') return 'Context';
+        if (note.type === 'personal-response') return 'Personal Response';
+        return null;
+    };
+
+    const noteTitle = getNoteTitle();
 
     return (
         <div
+            id={`note-${note.id}`}
             ref={noteRef}
             className={classNames}
             style={{
                 left: note.position.x,
                 top: note.position.y,
+                width: note.width || 220,
             }}
             onClick={onClick}
             onMouseDown={handleMouseDown}
@@ -150,57 +202,80 @@ export function Note({
         >
             <div className="note-header">
                 <div className="note-drag-handle" title="Drag to move">
-                    ⋮⋮
+                    {noteTitle ? <span className="note-title">{noteTitle}</span> : '⋮⋮'}
                 </div>
                 <div className="note-actions">
-                    <button
-                        className="note-action-button link-button"
-                        onClick={(e) => {
-                            e.stopPropagation();
-                            onStartLink();
-                        }}
-                        title="Link to another note"
-                    >
-                        🔗
-                    </button>
-                    <button
-                        className="note-action-button add-note-button"
-                        onClick={(e) => {
-                            e.stopPropagation();
-                            onAddConnectedNote();
-                        }}
-                        title="Add connected note"
-                    >
-                        ➕
-                    </button>
-                    <button
-                        className="note-action-button delete-button"
-                        onClick={(e) => {
-                            e.stopPropagation();
-                            onDelete();
-                        }}
-                        title="Delete note"
-                    >
-                        ×
-                    </button>
+                    {(onToggleCollapse && note.type) && (
+                        <button
+                            className="note-action-button collapse-button"
+                            onClick={(e) => {
+                                e.stopPropagation();
+                                onToggleCollapse();
+                            }}
+                            title={note.isCollapsed ? "Expand" : "Collapse"}
+                        >
+                            {note.isCollapsed ? '▼' : '▲'}
+                        </button>
+                    )}
+                    {!note.type && (
+                        <>
+                            <button
+                                className="note-action-button link-button"
+                                onClick={(e) => {
+                                    e.stopPropagation();
+                                    onStartLink();
+                                }}
+                                title="Link to another note"
+                            >
+                                🔗
+                            </button>
+                            <button
+                                className="note-action-button add-note-button"
+                                onClick={(e) => {
+                                    e.stopPropagation();
+                                    onAddConnectedNote();
+                                }}
+                                title="Add connected note"
+                            >
+                                ➕
+                            </button>
+                            <button
+                                className="note-action-button delete-button"
+                                onClick={(e) => {
+                                    e.stopPropagation();
+                                    onDelete();
+                                }}
+                                title="Delete note"
+                            >
+                                ×
+                            </button>
+                        </>
+                    )}
                 </div>
             </div>
 
-            <textarea
-                ref={textareaRef}
-                className="note-content"
-                value={localContent}
-                onChange={handleContentChange}
-                onBlur={handleContentBlur}
-                placeholder="Add your note..."
-                onClick={(e) => e.stopPropagation()}
-            />
+            {!note.isCollapsed && (
+                <textarea
+                    ref={textareaRef}
+                    className="note-content"
+                    value={localContent}
+                    onChange={handleContentChange}
+                    onBlur={handleContentBlur}
+                    placeholder={note.type ? `Add your ${noteTitle?.toLowerCase()}...` : "Add your note..."}
+                    onClick={(e) => e.stopPropagation()}
+                />
+            )}
 
             {note.linkedNotes.length > 0 && (
                 <div className="note-links-count">
                     {note.linkedNotes.length} link{note.linkedNotes.length !== 1 ? 's' : ''}
                 </div>
             )}
+
+            <div
+                className="note-resize-handle"
+                onMouseDown={handleResizeMouseDown}
+            />
         </div>
     );
 }

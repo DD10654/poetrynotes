@@ -107,9 +107,9 @@ export function NoteConnections({ notes, connections, canvasRef, highlights, zoo
             notes.forEach(note => {
                 // Get actual note dimensions and adjust by zoom
                 const noteEl = document.getElementById(`note-${note.id}`);
-                const nRect = noteEl ? noteEl.getBoundingClientRect() : { width: 220, height: 100 };
+                const nRect = noteEl ? noteEl.getBoundingClientRect() : { width: note.width || 220, height: 100 };
 
-                const noteWidth = nRect.width / zoomLevel;
+                const noteWidth = (note.width || nRect.width / zoomLevel);
                 const noteHeight = nRect.height / zoomLevel;
 
                 const currentNoteRect = {
@@ -176,6 +176,9 @@ export function NoteConnections({ notes, connections, canvasRef, highlights, zoo
 
                         const intersection = getIntersection(originX, originY, currentNoteRect);
 
+                        // If entering from right, adjust x slightly to avoid clipping if necessary
+                        // Actually let's just use the intersection as is but verify dx/dy
+
                         newLines.push({
                             id: `text-${note.id}-${hId}`,
                             x1: originX,
@@ -211,12 +214,12 @@ export function NoteConnections({ notes, connections, canvasRef, highlights, zoo
                     const fromNoteEl = document.getElementById(`note-${fromNote.id}`);
                     const toNoteEl = document.getElementById(`note-${toNote.id}`);
 
-                    const fromRectScaled = fromNoteEl ? fromNoteEl.getBoundingClientRect() : { width: 220, height: 100 };
-                    const toRectScaled = toNoteEl ? toNoteEl.getBoundingClientRect() : { width: 220, height: 100 };
+                    const fromRectScaled = fromNoteEl ? fromNoteEl.getBoundingClientRect() : { width: fromNote.width || 220, height: 100 };
+                    const toRectScaled = toNoteEl ? toNoteEl.getBoundingClientRect() : { width: toNote.width || 220, height: 100 };
 
-                    const fromWidth = fromRectScaled.width / zoomLevel;
+                    const fromWidth = fromNote.width || (fromRectScaled.width / zoomLevel);
                     const fromHeight = fromRectScaled.height / zoomLevel;
-                    const toWidth = toRectScaled.width / zoomLevel;
+                    const toWidth = toNote.width || (toRectScaled.width / zoomLevel);
                     const toHeight = toRectScaled.height / zoomLevel;
 
                     const fromRect = {

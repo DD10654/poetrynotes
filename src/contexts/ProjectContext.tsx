@@ -7,19 +7,45 @@ const STORAGE_KEY = 'poetry-notes-project';
 const AUTO_SAVE_INTERVAL = 30000; // 30 seconds
 
 // Initial empty project
-const createEmptyProject = (): Project => ({
-    projectId: uuidv4(),
-    version: '1.0',
-    title: 'Untitled Project',
-    createdAt: new Date().toISOString(),
-    lastModified: new Date().toISOString(),
-    poem: {
-        content: '',
-        highlights: [],
-    },
-    notes: [],
-    connections: [],
-});
+const createEmptyProject = (): Project => {
+    const now = new Date().toISOString();
+    return {
+        projectId: uuidv4(),
+        version: '1.0',
+        title: 'Untitled Project',
+        createdAt: now,
+        lastModified: now,
+        poem: {
+            content: '',
+            highlights: [],
+        },
+        notes: [
+            {
+                id: 'note-context',
+                content: '',
+                position: { x: 50, y: 50 },
+                textReferences: [],
+                linkedNotes: [],
+                createdAt: now,
+                lastModified: now,
+                type: 'context',
+                isCollapsed: true,
+            },
+            {
+                id: 'note-personal-response',
+                content: '',
+                position: { x: 50, y: 150 },
+                textReferences: [],
+                linkedNotes: [],
+                createdAt: now,
+                lastModified: now,
+                type: 'personal-response',
+                isCollapsed: true,
+            }
+        ],
+        connections: [],
+    };
+};
 
 // Reducer for project state
 function projectReducer(state: Project, action: ProjectAction): Project {
@@ -93,7 +119,7 @@ function projectReducer(state: Project, action: ProjectAction): Project {
                 ...state,
                 notes: state.notes.map(note =>
                     note.id === action.payload.id
-                        ? { ...note, content: action.payload.content, lastModified: now }
+                        ? { ...note, ...action.payload, lastModified: now }
                         : note
                 ),
                 lastModified: now,
@@ -187,6 +213,17 @@ function projectReducer(state: Project, action: ProjectAction): Project {
                 lastModified: now,
             };
 
+        case 'TOGGLE_NOTE_COLLAPSE':
+            return {
+                ...state,
+                notes: state.notes.map(note =>
+                    note.id === action.payload
+                        ? { ...note, isCollapsed: !note.isCollapsed, lastModified: now }
+                        : note
+                ),
+                lastModified: now,
+            };
+
         default:
             return state;
     }
@@ -225,12 +262,49 @@ interface ProjectProviderProps {
 
 export function ProjectProvider({ children }: ProjectProviderProps) {
     const [project, dispatch] = useReducer(projectReducer, null, () => {
-        // Try to load from localStorage on init
+        const now = new Date().toISOString();
+        const ensureSpecialNotes = (p: Project): Project => {
+            const hasContext = p.notes.some(n => n.id === 'note-context');
+            const hasPersonal = p.notes.some(n => n.id === 'note-personal-response');
+
+            if (hasContext && hasPersonal) return p;
+
+            const updatedNotes = [...p.notes];
+            if (!hasContext) {
+                updatedNotes.push({
+                    id: 'note-context',
+                    content: '',
+                    position: { x: 50, y: 50 },
+                    textReferences: [],
+                    linkedNotes: [],
+                    createdAt: now,
+                    lastModified: now,
+                    type: 'context',
+                    isCollapsed: true,
+                });
+            }
+            if (!hasPersonal) {
+                updatedNotes.push({
+                    id: 'note-personal-response',
+                    content: '',
+                    position: { x: 50, y: 150 },
+                    textReferences: [],
+                    linkedNotes: [],
+                    createdAt: now,
+                    lastModified: now,
+                    type: 'personal-response',
+                    isCollapsed: true,
+                });
+            }
+            return { ...p, notes: updatedNotes };
+        };
+
         if (typeof window !== 'undefined') {
             const saved = localStorage.getItem(STORAGE_KEY);
             if (saved) {
                 try {
-                    return JSON.parse(saved) as Project;
+                    const parsed = JSON.parse(saved) as Project;
+                    return ensureSpecialNotes(parsed);
                 } catch {
                     return createEmptyProject();
                 }
@@ -350,6 +424,42 @@ export function ProjectProvider({ children }: ProjectProviderProps) {
             // Basic validation
             if (!projectData.projectId || !projectData.poem || !projectData.notes) {
                 throw new Error('Invalid project file format');
+            }
+
+            // Ensure special notes
+            const now = new Date().toISOString();
+            const hasContext = projectData.notes.some(n => n.id === 'note-context');
+            const hasPersonal = projectData.notes.some(n => n.id === 'note-personal-response');
+
+            if (!hasContext || !hasPersonal) {
+                const updatedNotes = [...projectData.notes];
+                if (!hasContext) {
+                    updatedNotes.push({
+                        id: 'note-context',
+                        content: '',
+                        position: { x: 50, y: 50 },
+                        textReferences: [],
+                        linkedNotes: [],
+                        createdAt: now,
+                        lastModified: now,
+                        type: 'context',
+                        isCollapsed: true,
+                    });
+                }
+                if (!hasPersonal) {
+                    updatedNotes.push({
+                        id: 'note-personal-response',
+                        content: '',
+                        position: { x: 50, y: 150 },
+                        textReferences: [],
+                        linkedNotes: [],
+                        createdAt: now,
+                        lastModified: now,
+                        type: 'personal-response',
+                        isCollapsed: true,
+                    });
+                }
+                projectData.notes = updatedNotes;
             }
 
             dispatch({ type: 'SET_PROJECT', payload: projectData });
