@@ -79,4 +79,5 @@ export interface ViewState {
   selectedNoteId: string | null;
   linkingFromNoteId: string | null;
   isCreatingNote: boolean;
+  zoomLevel: number;
 }

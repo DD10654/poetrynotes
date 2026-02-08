@@ -9,6 +9,7 @@ interface NoteConnectionsProps {
     canvasRef: RefObject<HTMLDivElement | null>;
     editorRef: HTMLDivElement | null;
     highlights: Highlight[];
+    zoomLevel: number;
 }
 
 interface Line {
@@ -18,6 +19,7 @@ interface Line {
     x2: number;
     y2: number;
     type: 'note-to-text' | 'note-to-note';
+    color?: string;
 }
 
 /**
@@ -54,7 +56,7 @@ function getIntersection(
     return { x, y };
 }
 
-export function NoteConnections({ notes, connections, canvasRef, highlights }: NoteConnectionsProps) {
+export function NoteConnections({ notes, connections, canvasRef, highlights, zoomLevel }: NoteConnectionsProps) {
     const [lines, setLines] = useState<Line[]>([]);
     const [dimensions, setDimensions] = useState({ width: 0, height: 0 });
 
@@ -96,82 +98,83 @@ export function NoteConnections({ notes, connections, canvasRef, highlights }: N
             const canvasRect = canvasRef.current?.getBoundingClientRect();
             if (!canvasRect) return;
 
-            const noteWidth = 220;
-            const noteHeight = 100;
-
-            // Note-to-note connections
-            connections.forEach(conn => {
-                const fromNote = notes.find(n => n.id === conn.fromNoteId);
-                const toNote = notes.find(n => n.id === conn.toNoteId);
-
-                if (fromNote && toNote) {
-                    const fromCenterX = fromNote.position.x + noteWidth / 2;
-                    const fromCenterY = fromNote.position.y + noteHeight / 2;
-                    const toCenterX = toNote.position.x + noteWidth / 2;
-                    const toCenterY = toNote.position.y + noteHeight / 2;
-
-                    const fromRect = {
-                        x: fromNote.position.x,
-                        y: fromNote.position.y,
-                        width: noteWidth,
-                        height: noteHeight
-                    };
-
-                    const toRect = {
-                        x: toNote.position.x,
-                        y: toNote.position.y,
-                        width: noteWidth,
-                        height: noteHeight
-                    };
-
-                    // Origin is the intersection on the 'from' note border towards the 'to' note center
-                    const originIntersection = getIntersection(toCenterX, toCenterY, fromRect);
-                    // Target is the intersection on the 'to' note border towards the 'from' note center
-                    const targetIntersection = getIntersection(fromCenterX, fromCenterY, toRect);
-
-                    newLines.push({
-                        id: conn.id,
-                        x1: originIntersection.x,
-                        y1: originIntersection.y,
-                        x2: targetIntersection.x,
-                        y2: targetIntersection.y,
-                        type: 'note-to-note',
-                    });
-                }
-            });
 
 
-            // Note-to-text connections
+            // Helper map to store user-defined colors for each note
+            const noteColors = new Map<string, string>();
+
+            // Note-to-text connections (First pass to determine note colors)
             notes.forEach(note => {
+                // Get actual note dimensions and adjust by zoom
+                const noteEl = document.getElementById(`note-${note.id}`);
+                const nRect = noteEl ? noteEl.getBoundingClientRect() : { width: 220, height: 100 };
+
+                const noteWidth = nRect.width / zoomLevel;
+                const noteHeight = nRect.height / zoomLevel;
+
+                const currentNoteRect = {
+                    x: note.position.x,
+                    y: note.position.y,
+                    width: noteWidth,
+                    height: noteHeight
+                };
+
                 note.textReferences.forEach(hId => {
                     // Search for elements that contain this highlight ID
                     const highlightEls = document.querySelectorAll(`[data-highlight-id*="${hId}"]`);
                     let highlightEl: Element | null = null;
+                    let color = 'rgba(233, 69, 96, 0.5)'; // Default fallback
 
                     // Filter to find the exact match in comma-separated list
                     highlightEls.forEach(el => {
                         const ids = el.getAttribute('data-highlight-id')?.split(',') || [];
                         if (ids.includes(hId)) {
                             highlightEl = el;
+                            // Extract color from style or attribute if available
+                            const style = el.getAttribute('style');
+                            if (style) {
+                                const match = style.match(/background-color:\s*([^;]+)/);
+                                if (match) {
+                                    color = match[1];
+                                }
+                            }
+                            const dataColor = el.getAttribute('data-highlight-color');
+                            if (dataColor) {
+                                color = dataColor;
+                            }
                         }
                     });
 
+                    // Store the color for this note
+                    if (!noteColors.has(note.id)) {
+                        noteColors.set(note.id, color);
+                    }
+
                     if (highlightEl) {
                         const hRect = (highlightEl as HTMLElement).getBoundingClientRect();
+                        const pEl = (highlightEl as HTMLElement).closest('p') || highlightEl;
+                        const pRect = (pEl as HTMLElement).getBoundingClientRect();
 
+                        // local Canvas distances (divide by zoom)
+                        const localCanvasTop = canvasRect.top;
+                        const localCanvasLeft = canvasRect.left;
 
-                        // Origin is the right edge of the highlight text
-                        const originX = hRect.right - canvasRect.left;
-                        const originY = hRect.top + hRect.height / 2 - canvasRect.top;
+                        const originY = (hRect.top + hRect.height / 2 - localCanvasTop) / zoomLevel;
 
-                        const targetRect = {
-                            x: note.position.x,
-                            y: note.position.y,
-                            width: noteWidth,
-                            height: noteHeight
-                        };
+                        // Decide whether to use left or right of the paragraph based on note position
+                        const noteCenterX = note.position.x + noteWidth / 2;
+                        const highlightCenterX = (hRect.left + hRect.width / 2 - localCanvasLeft) / zoomLevel;
 
-                        const intersection = getIntersection(originX, originY, targetRect);
+                        let originX;
+                        if (noteCenterX < highlightCenterX) {
+                            // Note is to the left of the highlight, start from paragraph left
+                            originX = (pRect.left - localCanvasLeft) / zoomLevel;
+                        } else {
+                            // Note is to the right of the highlight, start from paragraph right
+                            originX = (pRect.right - localCanvasLeft) / zoomLevel;
+                        }
+
+                        const intersection = getIntersection(originX, originY, currentNoteRect);
 
                         newLines.push({
                             id: `text-${note.id}-${hId}`,
@@ -180,10 +183,11 @@ export function NoteConnections({ notes, connections, canvasRef, highlights }: N
                             x2: intersection.x,
                             y2: intersection.y,
                             type: 'note-to-text',
+                            color: color
                         });
                     } else {
                         // Fallback if element not found (e.g. not rendered yet)
-                        const fallbackY = note.position.y + noteHeight / 2;
+                        const fallbackY = note.position.y + currentNoteRect.height / 2;
                         newLines.push({
                             id: `text-fallback-${note.id}-${hId}`,
                             x1: 0,
@@ -191,9 +195,75 @@ export function NoteConnections({ notes, connections, canvasRef, highlights }: N
                             x2: note.position.x,
                             y2: fallbackY,
                             type: 'note-to-text',
+                            color: color
                         });
                     }
                 });
+            });
+
+            // Note-to-note connections (Second pass to use correct colors)
+            connections.forEach(conn => {
+                const fromNote = notes.find(n => n.id === conn.fromNoteId);
+                const toNote = notes.find(n => n.id === conn.toNoteId);
+
+                if (fromNote && toNote) {
+                    // Get actual note dimensions and adjust by zoom
+                    const fromNoteEl = document.getElementById(`note-${fromNote.id}`);
+                    const toNoteEl = document.getElementById(`note-${toNote.id}`);
+
+                    const fromRectScaled = fromNoteEl ? fromNoteEl.getBoundingClientRect() : { width: 220, height: 100 };
+                    const toRectScaled = toNoteEl ? toNoteEl.getBoundingClientRect() : { width: 220, height: 100 };
+
+                    const fromWidth = fromRectScaled.width / zoomLevel;
+                    const fromHeight = fromRectScaled.height / zoomLevel;
+                    const toWidth = toRectScaled.width / zoomLevel;
+                    const toHeight = toRectScaled.height / zoomLevel;
+
+                    const fromRect = {
+                        x: fromNote.position.x,
+                        y: fromNote.position.y,
+                        width: fromWidth,
+                        height: fromHeight
+                    };
+
+                    const toRect = {
+                        x: toNote.position.x,
+                        y: toNote.position.y,
+                        width: toWidth,
+                        height: toHeight
+                    };
+
+                    const fromCenterX = fromRect.x + fromRect.width / 2;
+                    const fromCenterY = fromRect.y + fromRect.height / 2;
+                    const toCenterX = toRect.x + toRect.width / 2;
+                    const toCenterY = toRect.y + toRect.height / 2;
+
+                    // Origin is the intersection on the 'from' note border towards the 'to' note center
+                    const originIntersection = getIntersection(toCenterX, toCenterY, fromRect);
+                    // Target is the intersection on the 'to' note border towards the 'from' note center
+                    const targetIntersection = getIntersection(fromCenterX, fromCenterY, toRect);
+
+                    // Propagate color from source note if available
+                    let lineColor = 'rgba(255, 193, 7, 0.4)'; // Default connection color
+                    if (noteColors.has(fromNote.id)) {
+                        lineColor = noteColors.get(fromNote.id) || lineColor;
+                    }
+
+                    newLines.push({
+                        id: conn.id,
+                        x1: originIntersection.x,
+                        y1: originIntersection.y,
+                        x2: targetIntersection.x,
+                        y2: targetIntersection.y,
+                        type: 'note-to-note',
+                        color: lineColor
+                    });
+
+                    // Also propgate color to the 'to' note for future connections if it doesn't have one
+                    if (!noteColors.has(toNote.id) && noteColors.has(fromNote.id)) {
+                        noteColors.set(toNote.id, noteColors.get(fromNote.id)!);
+                    }
+                }
             });
 
             setLines(newLines);
@@ -206,7 +276,7 @@ export function NoteConnections({ notes, connections, canvasRef, highlights }: N
         const interval = setInterval(calculateLines, 100);
         return () => clearInterval(interval);
 
-    }, [notes, connections, canvasRef, highlights]);
+    }, [notes, connections, canvasRef, highlights, zoomLevel]);
 
     if (lines.length === 0) return null;
 
@@ -217,32 +287,23 @@ export function NoteConnections({ notes, connections, canvasRef, highlights }: N
             height={dimensions.height || '100%'}
         >
             <defs>
-                <marker
-                    id="arrowhead"
-                    markerWidth="10"
-                    markerHeight="7"
-                    refX="9"
-                    refY="3.5"
-                    orient="auto"
-                >
-                    <polygon
-                        points="0 0, 10 3.5, 0 7"
-                        fill="rgba(255, 193, 7, 0.6)"
-                    />
-                </marker>
-                <marker
-                    id="arrowhead-text"
-                    markerWidth="8"
-                    markerHeight="6"
-                    refX="7"
-                    refY="3"
-                    orient="auto"
-                >
-                    <polygon
-                        points="0 0, 8 3, 0 6"
-                        fill="rgba(233, 69, 96, 0.5)"
-                    />
-                </marker>
+                {lines.map(line => (
+                    <marker
+                        key={`arrowhead-${line.id}`}
+                        id={`arrowhead-${line.id}`}
+                        markerWidth="10"
+                        markerHeight="7"
+                        refX="10"
+                        refY="3.5"
+                        orient="auto"
+                    >
+                        <polygon
+                            points="0 0, 10 3.5, 0 7"
+                            fill={line.color || "rgba(255, 193, 7, 0.6)"}
+                            fillOpacity="0.6"
+                        />
+                    </marker>
+                ))}
             </defs>
 
             {lines.map(line => (
@@ -253,7 +314,8 @@ export function NoteConnections({ notes, connections, canvasRef, highlights }: N
                     x2={line.x2}
                     y2={line.y2}
                     className={`connection-line ${line.type}`}
-                    markerEnd={line.type === 'note-to-note' ? 'url(#arrowhead)' : 'url(#arrowhead-text)'}
+                    style={{ stroke: line.color }}
+                    markerEnd={`url(#arrowhead-${line.id})`}
                 />
             ))}
         </svg>

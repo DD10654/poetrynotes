@@ -5,6 +5,7 @@ import './Note.css';
 
 interface NoteProps {
     note: NoteType;
+    zoomLevel: number;
     isSelected: boolean;
     isHovered: boolean;
     isLinkSource: boolean;
@@ -20,6 +21,7 @@ interface NoteProps {
 
 export function Note({
     note,
+    zoomLevel,
     isSelected,
     isHovered,
     isLinkSource,
@@ -64,21 +66,31 @@ export function Note({
             return;
         }
 
+        const canvas = noteRef.current?.closest('.notes-canvas');
+        const canvasRect = canvas?.getBoundingClientRect() || { left: 0, top: 0 };
+        const localX = (e.clientX - canvasRect.left) / zoomLevel;
+        const localY = (e.clientY - canvasRect.top) / zoomLevel;
+
         e.preventDefault();
         setIsDragging(true);
         setDragOffset({
-            x: e.clientX - note.position.x,
-            y: e.clientY - note.position.y,
+            x: localX - note.position.x,
+            y: localY - note.position.y,
         });
-    }, [note.position]);
+    }, [note.position, zoomLevel]);
 
     // Handle dragging
     useEffect(() => {
         if (!isDragging) return;
 
         const handleMouseMove = (e: MouseEvent) => {
-            const newX = Math.max(0, e.clientX - dragOffset.x);
-            const newY = Math.max(0, e.clientY - dragOffset.y);
+            const canvas = noteRef.current?.closest('.notes-canvas');
+            const canvasRect = canvas?.getBoundingClientRect() || { left: 0, top: 0 };
+            const localX = (e.clientX - canvasRect.left) / zoomLevel;
+            const localY = (e.clientY - canvasRect.top) / zoomLevel;
+
+            const newX = Math.max(0, localX - dragOffset.x);
+            const newY = Math.max(0, localY - dragOffset.y);
             onPositionChange(newX, newY);
         };
 
@@ -93,7 +105,7 @@ export function Note({
             document.removeEventListener('mousemove', handleMouseMove);
             document.removeEventListener('mouseup', handleMouseUp);
         };
-    }, [isDragging, dragOffset, onPositionChange]);
+    }, [isDragging, dragOffset, onPositionChange, zoomLevel]);
 
     // Handle content change with debounce
     const handleContentChange = (e: ChangeEvent<HTMLTextAreaElement>) => {

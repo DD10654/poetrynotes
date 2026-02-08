@@ -8,9 +8,10 @@ import './NotesCanvas.css';
 
 interface NotesCanvasProps {
     editorRef: HTMLDivElement | null;
+    zoomLevel: number;
 }
 
-export function NotesCanvas({ editorRef }: NotesCanvasProps) {
+export function NotesCanvas({ editorRef, zoomLevel }: NotesCanvasProps) {
     const { project, viewState, setViewState, dispatch } = useProject();
     const canvasRef = useRef<HTMLDivElement>(null);
 
@@ -150,12 +151,14 @@ export function NotesCanvas({ editorRef }: NotesCanvasProps) {
                 canvasRef={canvasRef}
                 editorRef={editorRef}
                 highlights={project.poem.highlights}
+                zoomLevel={zoomLevel}
             />
 
             {project.notes.map(note => (
                 <NoteComponent
                     key={note.id}
                     note={note}
+                    zoomLevel={zoomLevel}
                     isSelected={viewState.selectedNoteId === note.id}
                     isHovered={viewState.hoveredNoteId === note.id}
                     isLinkSource={viewState.linkingFromNoteId === note.id}

@@ -216,6 +216,7 @@ const initialViewState: ViewState = {
     selectedNoteId: null,
     linkingFromNoteId: null,
     isCreatingNote: false,
+    zoomLevel: 1.0,
 };
 
 interface ProjectProviderProps {
@@ -290,53 +291,53 @@ export function ProjectProvider({ children }: ProjectProviderProps) {
     }, []);
 
     // Export project as JSON file
-const exportProject = useCallback(() => {
-    console.log('=== Export function called ===');
-    console.log('Project data:', project);
+    const exportProject = useCallback(() => {
+        console.log('=== Export function called ===');
+        console.log('Project data:', project);
 
-    // Add error handling
-    if (!project) {
-        console.error('❌ No project data to export');
-        return;
-    }
+        // Add error handling
+        if (!project) {
+            console.error('❌ No project data to export');
+            return;
+        }
 
-    try {
-        console.log('Creating JSON string...');
-        const jsonString = JSON.stringify(project, null, 2);
-        console.log('JSON string created, length:', jsonString.length);
-        
-        console.log('Creating blob...');
-        const blob = new Blob([jsonString], { type: 'application/json' });
-        console.log('Blob created:', blob.size, 'bytes');
+        try {
+            console.log('Creating JSON string...');
+            const jsonString = JSON.stringify(project, null, 2);
+            console.log('JSON string created, length:', jsonString.length);
 
-        const timestamp = new Date().toISOString().split('T')[0];
-        const safeTitle = (project.title || 'project').replace(/[^a-z0-9]/gi, '-').toLowerCase();
-        const filename = `${safeTitle}-${timestamp}.json`;
-        console.log('Filename:', filename);
+            console.log('Creating blob...');
+            const blob = new Blob([jsonString], { type: 'application/json' });
+            console.log('Blob created:', blob.size, 'bytes');
 
-        console.log('Creating download URL...');
-        const url = URL.createObjectURL(blob);
-        console.log('URL created:', url);
-        
-        console.log('Creating and triggering download link...');
-        const link = document.createElement('a');
-        link.href = url;
-        link.download = filename;
-        console.log('Link element:', link);
-        console.log('Download attribute:', link.download);
-        
-        link.click();
-        console.log('✅ Link clicked, download should start');
-        
-        // Cleanup
-        setTimeout(() => {
-            URL.revokeObjectURL(url);
-            console.log('🧹 Cleanup completed');
-        }, 1000);
-    } catch (error) {
-        console.error('❌ Export failed:', error);
-    }
-}, [project]);
+            const timestamp = new Date().toISOString().split('T')[0];
+            const safeTitle = (project.title || 'project').replace(/[^a-z0-9]/gi, '-').toLowerCase();
+            const filename = `${safeTitle}-${timestamp}.json`;
+            console.log('Filename:', filename);
+
+            console.log('Creating download URL...');
+            const url = URL.createObjectURL(blob);
+            console.log('URL created:', url);
+
+            console.log('Creating and triggering download link...');
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = filename;
+            console.log('Link element:', link);
+            console.log('Download attribute:', link.download);
+
+            link.click();
+            console.log('✅ Link clicked, download should start');
+
+            // Cleanup
+            setTimeout(() => {
+                URL.revokeObjectURL(url);
+                console.log('🧹 Cleanup completed');
+            }, 1000);
+        } catch (error) {
+            console.error('❌ Export failed:', error);
+        }
+    }, [project]);
 
 
 

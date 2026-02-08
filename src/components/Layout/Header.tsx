@@ -7,7 +7,7 @@ interface HeaderProps {
 }
 
 export function Header({ onBackToLanding }: HeaderProps) {
-    const { project, dispatch, saveToLocalStorage, exportProject, hasUnsavedChanges } = useProject();
+    const { project, viewState, setViewState, dispatch, saveToLocalStorage, exportProject, hasUnsavedChanges } = useProject();
     const [isEditingTitle, setIsEditingTitle] = React.useState(false);
     const [titleValue, setTitleValue] = React.useState(project.title);
     const inputRef = React.useRef<HTMLInputElement>(null);
@@ -57,6 +57,18 @@ export function Header({ onBackToLanding }: HeaderProps) {
         exportProject();
     };
 
+    const handleZoomIn = () => {
+        setViewState(prev => ({ ...prev, zoomLevel: Math.min(prev.zoomLevel + 0.1, 2.0) }));
+    };
+
+    const handleZoomOut = () => {
+        setViewState(prev => ({ ...prev, zoomLevel: Math.max(prev.zoomLevel - 0.1, 0.5) }));
+    };
+
+    const handleZoomReset = () => {
+        setViewState(prev => ({ ...prev, zoomLevel: 1.0 }));
+    };
+
     return (
         <header className="app-header">
             <div className="header-left">
@@ -99,6 +111,19 @@ export function Header({ onBackToLanding }: HeaderProps) {
                     <span className="button-icon">📥</span>
                     Export
                 </button>
+
+                <div className="zoom-controls">
+                    <button className="zoom-button" onClick={handleZoomOut} title="Zoom Out">
+                        −
+                    </button>
+                    <span className="zoom-level">{Math.round(viewState.zoomLevel * 100)}%</span>
+                    <button className="zoom-button" onClick={handleZoomIn} title="Zoom In">
+                        +
+                    </button>
+                    <button className="zoom-reset" onClick={handleZoomReset} title="Reset Zoom">
+                        ↺
+                    </button>
+                </div>
             </div>
         </header>
     );
