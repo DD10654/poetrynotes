@@ -1,14 +1,14 @@
 .poem-editor-wrapper {
     display: flex;
     flex-direction: column;
-    height: 100%;
+    height: auto;
 }
 
 .poem-editor-container {
     flex: 1;
     padding: 1.5rem;
-    overflow: auto;
     position: relative;
+    height: auto;
 }
 
 .poem-editor-content {

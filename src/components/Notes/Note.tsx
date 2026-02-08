@@ -14,6 +14,7 @@ interface NoteProps {
     onStartLink: () => void;
     onPositionChange: (x: number, y: number) => void;
     onContentChange: (content: string) => void;
+    onAddConnectedNote: () => void;
     onDelete: () => void;
 }
 
@@ -26,6 +27,7 @@ export function Note({
     onClick,
     onHover,
     onStartLink,
+    onAddConnectedNote,
     onPositionChange,
     onContentChange,
     onDelete,
@@ -148,6 +150,16 @@ export function Note({
                         title="Link to another note"
                     >
                         🔗
+                    </button>
+                    <button
+                        className="note-action-button add-note-button"
+                        onClick={(e) => {
+                            e.stopPropagation();
+                            onAddConnectedNote();
+                        }}
+                        title="Add connected note"
+                    >
+                        ➕
                     </button>
                     <button
                         className="note-action-button delete-button"

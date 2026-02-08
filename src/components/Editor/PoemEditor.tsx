@@ -32,6 +32,7 @@ export function PoemEditor({ onEditorRef }: PoemEditorProps) {
     const [showCreateNote, setShowCreateNote] = useState(false);
     const [selectionRect, setSelectionRect] = useState<DOMRect | null>(null);
     const editorContainerRef = useRef<HTMLDivElement>(null);
+    const isCleaningUpRef = useRef(false);
 
     const editor = useEditor({
         extensions: [
@@ -54,6 +55,49 @@ export function PoemEditor({ onEditorRef }: PoemEditorProps) {
         content: project.poem.content || '<p></p>',
         onUpdate: ({ editor }) => {
             dispatch({ type: 'UPDATE_POEM_CONTENT', payload: editor.getHTML() });
+        },
+        onSelectionUpdate: ({ editor }) => {
+            if (isCleaningUpRef.current) return;
+
+            const { from, to } = editor.state.selection;
+            const isCollapsed = from === to;
+
+            if (isCollapsed) {
+                setShowCreateNote(false);
+                setSelectionRect(null);
+                return;
+            }
+
+            // Check if selection contains existing highlights
+            let hasHighlight = false;
+            editor.state.doc.nodesBetween(from, to, (node) => {
+                if (node.marks.some(m => m.type.name === 'poetHighlight')) {
+                    hasHighlight = true;
+                }
+            });
+
+            if (hasHighlight) {
+                setShowCreateNote(false);
+                setSelectionRect(null);
+                return;
+            }
+
+            // Get selection rectangle for positioning
+            const selection = window.getSelection();
+            if (selection && selection.rangeCount > 0) {
+                const range = selection.getRangeAt(0);
+                const rect = range.getBoundingClientRect();
+
+                // Guard against invalid/zero rects (happens during some deletions or rapid updates)
+                if (rect.width === 0 && rect.height === 0) {
+                    setShowCreateNote(false);
+                    setSelectionRect(null);
+                    return;
+                }
+
+                setSelectionRect(rect);
+                setShowCreateNote(true);
+            }
         },
         editorProps: {
             attributes: {
@@ -94,44 +138,18 @@ export function PoemEditor({ onEditorRef }: PoemEditorProps) {
         }
     }, [editor, project.poem.content]);
 
-    // Handle text selection
+    // Handle text selection - simplified as logic moved to onSelectionUpdate
     const handleMouseUp = useCallback(() => {
-        if (!editorContainerRef.current || !editor) return;
-
-        const selection = window.getSelection();
-        if (selection && !selection.isCollapsed && selection.toString().trim()) {
-            const { from, to } = editor.state.selection;
-
-            // CHECK: Does the selection contain any existing highlights?
-            let hasHighlight = false;
-            editor.state.doc.nodesBetween(from, to, (node) => {
-                if (node.marks.some(m => m.type.name === 'poetHighlight')) {
-                    hasHighlight = true;
-                }
-            });
-
-            if (hasHighlight) {
-                setShowCreateNote(false);
-                setSelectionRect(null);
-                return;
-            }
-
-            const range = selection.getRangeAt(0);
-            const rect = range.getBoundingClientRect();
-            setSelectionRect(rect);
-            setShowCreateNote(true);
-        } else {
-            setShowCreateNote(false);
-            setSelectionRect(null);
-        }
-    }, [editor]);
+        // We still need this to trigger onSelectionUpdate if TipTap doesn't catch it
+        // but TipTap usually does.
+    }, []);
 
     // Cleanup: Remove highlight marks from editor if they no longer exist in project state (deleted notes)
     useEffect(() => {
         if (!editor || !project.poem.highlights) return;
 
+        isCleaningUpRef.current = true;
         const validIds = project.poem.highlights.map(h => h.id);
-
 
         // Find all data-highlight-id spans and check if they should be stripped
         editor.state.doc.descendants((node, pos) => {
@@ -151,8 +169,11 @@ export function PoemEditor({ onEditorRef }: PoemEditorProps) {
             }
         });
 
-        // If we messed with selection for cleaning, return focus to where it was if possible
-        // but since this usually happens after dispatch, it's fine.
+        // Use setTimeout to allow the selection updates to flush before enabling checks again
+        setTimeout(() => {
+            isCleaningUpRef.current = false;
+        }, 0);
+
     }, [project.poem.highlights, editor]);
 
 
@@ -222,8 +243,83 @@ export function PoemEditor({ onEditorRef }: PoemEditorProps) {
         setShowCreateNote(false);
         setSelectionRect(null);
         window.getSelection()?.removeAllRanges();
-        setViewState(prev => ({ ...prev, selectedNoteId: noteId }));
+        setViewState(prev => ({
+            ...prev,
+            selectedNoteId: noteId,
+            linkingFromNoteId: null
+        }));
     }, [editor, project.notes, selectionRect, dispatch, setViewState]);
+
+    // Link selection to existing note
+    const handleLinkToNote = useCallback(() => {
+        if (!editorContainerRef.current || !editor || !viewState.linkingFromNoteId) return;
+
+        const selectionInfo = getTextSelection(editorContainerRef.current);
+        if (!selectionInfo) return;
+
+        const highlightId = generateHighlightId();
+
+        // Find the color of the note we are linking to, or use its existing color if any
+        const sourceNote = project.notes.find(n => n.id === viewState.linkingFromNoteId);
+        if (!sourceNote) return;
+
+        // Find color from first highlight if available
+        let color = COLOR_PALETTE[0];
+        if (sourceNote.textReferences.length > 0) {
+            // Colors are in the editor marks, so we'll just use the default or next in palette for now
+            color = COLOR_PALETTE[project.notes.indexOf(sourceNote) % COLOR_PALETTE.length];
+        }
+
+        // Apply the highlight mark
+        editor.chain().setPoetHighlight({ id: highlightId, color }).run();
+
+        // Create highlight object
+        const highlight = {
+            id: highlightId,
+            lineIndex: selectionInfo.lineIndex,
+            startOffset: selectionInfo.startOffset,
+            endOffset: selectionInfo.endOffset,
+            text: selectionInfo.text,
+            noteIds: [viewState.linkingFromNoteId],
+        };
+
+        // Update note with new text reference
+        const updatedReferences = [...sourceNote.textReferences, highlightId];
+
+        dispatch({ type: 'ADD_HIGHLIGHT', payload: highlight });
+
+        // We need an action to update note references
+        // types.ts doesn't have UPDATE_NOTE_REFERENCES, but we can use UPDATE_NOTE or similar
+        // Let's check UPDATE_NOTE in ProjectContext
+
+        // Looking at ProjectContext.tsx, UPDATE_NOTE only updates content.
+        // I should probably add UPDATE_NOTE_REFERENCES or just handle it here if dispatch supports it.
+        // For now, I'll use a trick or check if I can modify types.ts
+
+        // Actually, let's just dispatch the update if the reducer supports it, 
+        // or I'll add the action type.
+
+        dispatch({
+            type: 'SET_PROJECT',
+            payload: {
+                ...project,
+                poem: {
+                    ...project.poem,
+                    highlights: [...project.poem.highlights, highlight]
+                },
+                notes: project.notes.map(n =>
+                    n.id === viewState.linkingFromNoteId
+                        ? { ...n, textReferences: updatedReferences, lastModified: new Date().toISOString() }
+                        : n
+                )
+            }
+        });
+
+        setShowCreateNote(false);
+        setSelectionRect(null);
+        window.getSelection()?.removeAllRanges();
+        setViewState(prev => ({ ...prev, linkingFromNoteId: null, selectedNoteId: sourceNote.id }));
+    }, [editor, project, viewState.linkingFromNoteId, dispatch, setViewState]);
 
 
 
@@ -262,7 +358,9 @@ export function PoemEditor({ onEditorRef }: PoemEditorProps) {
 
 
     return (
-        <div className="poem-editor-wrapper">
+        <div className="poem-editor-wrapper" onMouseLeave={() => {
+            // Optional: hide button when leaving editor
+        }}>
             <RichTextToolbar editor={editor} />
 
             <div
@@ -273,17 +371,37 @@ export function PoemEditor({ onEditorRef }: PoemEditorProps) {
                 <EditorContent editor={editor} />
 
                 {showCreateNote && selectionRect && (
-                    <button
-                        className="create-note-button"
-                        onClick={handleCreateNote}
+                    <div
+                        className="selection-buttons-container"
                         style={{
-                            position: 'fixed',
-                            left: selectionRect.right + 10,
-                            top: selectionRect.top + (selectionRect.height / 2) - 16,
+                            position: 'absolute',
+                            left: selectionRect.right - (editorContainerRef.current?.getBoundingClientRect().left || 0) + 10,
+                            top: selectionRect.top - (editorContainerRef.current?.getBoundingClientRect().top || 0) + (selectionRect.height / 2) - 16,
+                            display: 'flex',
+                            gap: '8px',
+                            zIndex: 1000
                         }}
                     >
-                        + Note
-                    </button>
+                        <button
+                            className="create-note-button"
+                            onClick={handleCreateNote}
+                        >
+                            + Note
+                        </button>
+
+                        {viewState.linkingFromNoteId && (
+                            <button
+                                className="create-note-button link-selection-button"
+                                onClick={handleLinkToNote}
+                                style={{
+                                    background: 'linear-gradient(135deg, #ffc107 0%, #ff8f00 100%)',
+                                    boxShadow: '0 4px 15px rgba(255, 193, 7, 0.4)'
+                                }}
+                            >
+                                + Link
+                            </button>
+                        )}
+                    </div>
                 )}
             </div>
         </div>

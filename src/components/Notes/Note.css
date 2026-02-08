@@ -118,6 +118,11 @@
     color: #ffc107;
 }
 
+.note-action-button.add-note-button:hover {
+    background: rgba(76, 175, 80, 0.2);
+    color: #4caf50;
+}
+
 .note-action-button.delete-button {
     font-size: 1.25rem;
     font-weight: 300;

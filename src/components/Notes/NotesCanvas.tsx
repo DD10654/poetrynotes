@@ -1,5 +1,7 @@
 import { useRef, useCallback } from 'react';
+import { v4 as uuidv4 } from 'uuid';
 import { useProject } from '../../contexts/ProjectContext';
+import type { Note } from '../../types';
 import { Note as NoteComponent } from './Note';
 import { NoteConnections } from './NoteConnections';
 import './NotesCanvas.css';
@@ -84,6 +86,58 @@ export function NotesCanvas({ editorRef }: NotesCanvasProps) {
         }));
     }, [dispatch, setViewState]);
 
+    // Handle adding a connected note
+    const handleAddConnectedNote = useCallback((sourceNote: Note) => {
+        const now = new Date().toISOString();
+        const newNoteId = uuidv4();
+
+        // Smart positioning: check if sourceNote is on Left or Right side of canvas center
+        const canvasWidth = canvasRef.current?.offsetWidth || window.innerWidth;
+        const centerX = canvasWidth / 2;
+        const isLeftSide = sourceNote.position.x < centerX;
+
+        // If on left side, move further left. If on right side, move further right.
+        const offset = isLeftSide ? -250 : 250;
+
+        const newNote = {
+            id: newNoteId,
+            content: '',
+            position: {
+                x: Math.max(20, sourceNote.position.x + offset),
+                y: sourceNote.position.y
+            },
+            textReferences: [],
+            linkedNotes: [],
+            createdAt: now,
+            lastModified: now,
+        };
+
+        dispatch({ type: 'ADD_NOTE', payload: newNote });
+
+        // Link them
+        dispatch({
+            type: 'LINK_NOTES',
+            payload: { fromId: sourceNote.id, toId: newNote.id },
+        });
+
+        dispatch({
+            type: 'ADD_CONNECTION',
+            payload: {
+                id: `conn-${Date.now()}`,
+                fromNoteId: sourceNote.id,
+                toNoteId: newNote.id,
+                type: 'note-to-note',
+            },
+        });
+
+        // Turn off linking mode and select the new note
+        setViewState(prev => ({
+            ...prev,
+            selectedNoteId: newNote.id,
+            linkingFromNoteId: null
+        }));
+    }, [dispatch, setViewState]);
+
     return (
         <div
             ref={canvasRef}
@@ -109,6 +163,7 @@ export function NotesCanvas({ editorRef }: NotesCanvasProps) {
                     onClick={() => handleNoteClick(note.id)}
                     onHover={(hovering) => handleNoteHover(hovering ? note.id : null)}
                     onStartLink={() => handleStartLink(note.id)}
+                    onAddConnectedNote={() => handleAddConnectedNote(note)}
                     onPositionChange={(x, y) => handlePositionChange(note.id, x, y)}
                     onContentChange={(content) => handleContentChange(note.id, content)}
                     onDelete={() => handleDeleteNote(note.id)}
