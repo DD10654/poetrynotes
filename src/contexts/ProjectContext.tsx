@@ -71,6 +71,8 @@ function projectReducer(state: Project, action: ProjectAction): Project {
             // Basic reconciliation: notes that no longer have ANY highlights and NO connections
 
             const updatedNotes = state.notes.filter(note => {
+                if (note.type) return true; // Never auto-delete special notes
+
                 const hasHighlights = updatedHighlights.some(h => note.textReferences.includes(h.id));
                 const hasConnections = state.connections.some(c => c.fromNoteId === note.id || c.toNoteId === note.id);
                 const hasLinkedNotes = note.linkedNotes.length > 0 || state.notes.some(n => n.linkedNotes.includes(note.id));
@@ -138,6 +140,9 @@ function projectReducer(state: Project, action: ProjectAction): Project {
 
         case 'DELETE_NOTE': {
             const noteId = action.payload;
+            const noteToDelete = state.notes.find(n => n.id === noteId);
+            if (noteToDelete?.type) return state; // Guard against deleting special notes
+
             // Remove note references from highlights
             const updatedHighlights = state.poem.highlights
                 .map(h => ({
