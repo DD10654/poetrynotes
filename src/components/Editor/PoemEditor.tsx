@@ -284,36 +284,8 @@ export function PoemEditor({ onEditorRef }: PoemEditorProps) {
         };
 
         // Update note with new text reference
-        const updatedReferences = [...sourceNote.textReferences, highlightId];
-
         dispatch({ type: 'ADD_HIGHLIGHT', payload: highlight });
-
-        // We need an action to update note references
-        // types.ts doesn't have UPDATE_NOTE_REFERENCES, but we can use UPDATE_NOTE or similar
-        // Let's check UPDATE_NOTE in ProjectContext
-
-        // Looking at ProjectContext.tsx, UPDATE_NOTE only updates content.
-        // I should probably add UPDATE_NOTE_REFERENCES or just handle it here if dispatch supports it.
-        // For now, I'll use a trick or check if I can modify types.ts
-
-        // Actually, let's just dispatch the update if the reducer supports it, 
-        // or I'll add the action type.
-
-        dispatch({
-            type: 'SET_PROJECT',
-            payload: {
-                ...project,
-                poem: {
-                    ...project.poem,
-                    highlights: [...project.poem.highlights, highlight]
-                },
-                notes: project.notes.map(n =>
-                    n.id === viewState.linkingFromNoteId
-                        ? { ...n, textReferences: updatedReferences, lastModified: new Date().toISOString() }
-                        : n
-                )
-            }
-        });
+        dispatch({ type: 'UPDATE_NOTE_REFERENCES', payload: { id: viewState.linkingFromNoteId, highlightId } });
 
         setShowCreateNote(false);
         setSelectionRect(null);

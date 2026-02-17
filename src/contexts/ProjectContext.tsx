@@ -127,6 +127,19 @@ function projectReducer(state: Project, action: ProjectAction): Project {
                 lastModified: now,
             };
 
+        case 'UPDATE_NOTE_REFERENCES': {
+            const { id, highlightId } = action.payload;
+            return {
+                ...state,
+                notes: state.notes.map(note =>
+                    note.id === id && !note.textReferences.includes(highlightId)
+                        ? { ...note, textReferences: [...note.textReferences, highlightId], lastModified: now }
+                        : note
+                ),
+                lastModified: now,
+            };
+        }
+
         case 'UPDATE_NOTE_POSITION':
             return {
                 ...state,

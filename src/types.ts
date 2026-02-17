@@ -69,6 +69,7 @@ export type ProjectAction =
   | { type: 'REMOVE_HIGHLIGHT'; payload: string }
   | { type: 'ADD_NOTE'; payload: Note }
   | { type: 'UPDATE_NOTE'; payload: { id: string; content?: string; isCollapsed?: boolean; width?: number } }
+  | { type: 'UPDATE_NOTE_REFERENCES'; payload: { id: string; highlightId: string } }
   | { type: 'UPDATE_NOTE_POSITION'; payload: { id: string; position: NotePosition } }
   | { type: 'DELETE_NOTE'; payload: string }
   | { type: 'LINK_NOTES'; payload: { fromId: string; toId: string } }
