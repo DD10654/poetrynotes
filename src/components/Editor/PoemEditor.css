@@ -12,10 +12,10 @@
 }
 
 .poem-editor-content {
-    font-family: 'Crimson Pro', 'Georgia', 'Times New Roman', serif;
+    font-family: 'Georgia', 'Times New Roman', serif;
     font-size: 1.125rem;
     line-height: 1.8;
-    color: rgba(255, 255, 255, 0.9);
+    color: var(--color-text-primary);
     min-height: 100%;
     outline: none;
 }
@@ -29,7 +29,7 @@
 
 .poem-editor-content p:empty::before {
     content: 'Start writing your poem...';
-    color: rgba(255, 255, 255, 0.3);
+    color: var(--color-text-muted);
     font-style: italic;
 }
 
@@ -45,18 +45,18 @@
 /* Italic styling */
 .poem-editor-content em {
     font-style: italic;
-    color: rgba(255, 255, 255, 0.95);
+    color: var(--color-text-primary);
 }
 
 /* Selection styling */
 .poem-editor-content ::selection {
-    background: rgba(233, 69, 96, 0.4);
-    color: #ffffff;
+    background: hsla(220, 70%, 45%, 0.2);
+    color: var(--color-text-primary);
 }
 
 /* Highlighted text (with notes) */
 .poem-editor-content .highlight {
-    background: rgba(255, 193, 7, 0.2);
+    background: hsla(220, 70%, 45%, 0.1);
     border-radius: 2px;
     padding: 0 2px;
     margin: 0 -2px;
@@ -64,21 +64,22 @@
 }
 
 .poem-editor-content .highlight.active {
-    background: rgba(255, 193, 7, 0.4);
+    background: hsla(220, 70%, 45%, 0.25);
     transform: scale(1.05);
 }
 
 /* Create note button */
 .create-note-button {
-    background: linear-gradient(135deg, #e94560 0%, #ff6b6b 100%);
+    background: var(--gradient-hero);
     color: #ffffff;
     border: none;
     padding: 0.5rem 1rem;
-    border-radius: 20px;
+    border-radius: var(--radius-md);
     font-size: 0.875rem;
-    font-weight: 600;
+    font-weight: 700;
+    font-family: var(--font-sans);
     cursor: pointer;
-    box-shadow: 0 4px 15px rgba(233, 69, 96, 0.4);
+    box-shadow: var(--shadow-soft);
     transition: all 0.2s ease;
     z-index: 100;
     animation: fadeIn 0.15s ease;
@@ -87,52 +88,37 @@
 
 .create-note-button:hover {
     transform: scale(1.05);
-    box-shadow: 0 6px 20px rgba(233, 69, 96, 0.5);
+    box-shadow: var(--shadow-hover);
 }
 
 @keyframes fadeIn {
-    from {
-        opacity: 0;
-        transform: translateX(-10px);
-    }
-
-    to {
-        opacity: 1;
-        transform: translateX(0);
-    }
+    from { opacity: 0; transform: translateX(-10px); }
+    to { opacity: 1; transform: translateX(0); }
 }
 
 /* Placeholder state */
 .poem-editor-content:empty::before,
 .poem-editor-content>p:first-child:empty::before {
     content: 'Start writing your poem here...';
-    color: rgba(255, 255, 255, 0.3);
+    color: var(--color-text-muted);
     font-style: italic;
     pointer-events: none;
 }
 
 /* Tab indentation */
-.poem-editor-content p.indent-1 {
-    padding-left: 2rem;
-}
-
-.poem-editor-content p.indent-2 {
-    padding-left: 4rem;
-}
-
-.poem-editor-content p.indent-3 {
-    padding-left: 6rem;
-}
+.poem-editor-content p.indent-1 { padding-left: 2rem; }
+.poem-editor-content p.indent-2 { padding-left: 4rem; }
+.poem-editor-content p.indent-3 { padding-left: 6rem; }
 
 /* Focus state */
 .poem-editor-container:focus-within {
-    background: rgba(255, 255, 255, 0.02);
+    background: hsla(220, 70%, 45%, 0.02);
 }
 
 /* Character-level Highlight Styles */
 .poet-highlight {
-    background-color: rgba(233, 69, 96, 0.15);
-    border-bottom: 2px solid rgba(233, 69, 96, 0.4);
+    background-color: hsla(220, 70%, 45%, 0.12);
+    border-bottom: 2px solid var(--color-accent-primary);
     border-radius: 2px;
     padding: 0 1px;
     margin: 0;
@@ -142,14 +128,14 @@
 }
 
 .poet-highlight:hover {
-    background-color: rgba(233, 69, 96, 0.3) !important;
+    background-color: hsla(220, 70%, 45%, 0.25) !important;
 }
 
 .poet-highlight.highlight-hovered {
-    background-color: rgba(233, 69, 96, 0.6) !important;
-    border-bottom-color: #ffffff !important;
-    box-shadow: 0 0 15px rgba(255, 255, 255, 0.3);
-    transform: scale(1.1);
+    background-color: hsla(220, 70%, 45%, 0.35) !important;
+    border-bottom-color: var(--color-accent-warm) !important;
+    box-shadow: 0 2px 8px hsla(220, 70%, 45%, 0.2);
+    transform: scale(1.05);
     display: inline-block;
     margin: 0 2px;
     z-index: 5;

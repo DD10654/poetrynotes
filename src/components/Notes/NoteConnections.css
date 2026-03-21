@@ -14,12 +14,12 @@
 }
 
 .connection-line.note-to-note {
-    stroke: rgba(255, 193, 7, 0.4);
+    stroke: hsla(15, 90%, 60%, 0.4);
     stroke-dasharray: none;
 }
 
 .connection-line.note-to-text {
-    stroke: rgba(233, 69, 96, 0.3);
+    stroke: hsla(220, 70%, 45%, 0.3);
     stroke-dasharray: 4 4;
 }
 

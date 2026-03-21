@@ -56,17 +56,17 @@ export function LandingPage({ onProjectReady }: LandingPageProps) {
 
     return (
         <div className="landing-page">
-            <div className="landing-content">
-                <div className="landing-header">
-                    <div className="logo">
-                        <span className="logo-icon">📝</span>
-                        <h1>Poetry Notes</h1>
-                    </div>
-                    <p className="tagline">
-                        Annotate and explore poetry with interconnected notes
-                    </p>
+            <div className="landing-header">
+                <div className="logo">
+                    <span className="logo-icon">📝</span>
+                    <h1>Poetry Notes</h1>
                 </div>
+                <p className="tagline">
+                    Annotate and explore poetry with interconnected notes
+                </p>
+            </div>
 
+            <div className="landing-content">
                 <div className="landing-actions">
                     {hasExistingProject && (
                         <button className="action-button primary" onClick={handleContinue}>
