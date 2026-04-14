@@ -51,6 +51,30 @@
   --gradient-hero: linear-gradient(135deg, hsl(220, 70%, 45%) 0%, hsl(200, 80%, 50%) 50%, hsl(15, 90%, 60%) 100%);
 }
 
+/* Dark mode overrides */
+:root.dark-mode {
+  --color-bg-primary: hsl(220, 20%, 10%);
+  --color-bg-secondary: hsl(220, 20%, 14%);
+  --color-bg-tertiary: hsl(220, 15%, 18%);
+  --color-accent-primary: hsl(220, 70%, 55%);
+  --color-accent-secondary: hsl(200, 80%, 55%);
+  --color-accent-warm: hsl(15, 90%, 65%);
+  --color-accent-warning: hsl(40, 95%, 60%);
+  --color-accent-success: hsl(145, 60%, 50%);
+  --color-accent-info: hsl(220, 70%, 60%);
+  --color-accent-destructive: hsl(0, 84%, 65%);
+  --color-text-primary: hsl(220, 15%, 90%);
+  --color-text-secondary: hsl(220, 10%, 70%);
+  --color-text-muted: hsl(220, 8%, 55%);
+  --color-border: hsl(220, 15%, 25%);
+
+  --shadow-sm: 0 1px 3px hsla(220, 20%, 5%, 0.2);
+  --shadow-card: 0 2px 12px -2px hsla(220, 20%, 5%, 0.3);
+  --shadow-soft: 0 4px 20px -4px hsla(220, 70%, 20%, 0.3);
+  --shadow-hover: 0 8px 30px -8px hsla(220, 70%, 20%, 0.4);
+  --shadow-accent: 0 4px 20px -4px hsla(220, 70%, 30%, 0.3);
+}
+
 /* Reset */
 *,
 *::before,
@@ -114,9 +138,9 @@ textarea {
 }
 
 ::-webkit-scrollbar { width: 8px; height: 8px; }
-::-webkit-scrollbar-track { background: hsl(220, 20%, 96%); }
-::-webkit-scrollbar-thumb { background: hsl(220, 20%, 82%); border-radius: 4px; }
-::-webkit-scrollbar-thumb:hover { background: hsl(220, 20%, 70%); }
+::-webkit-scrollbar-track { background: var(--color-bg-tertiary); }
+::-webkit-scrollbar-thumb { background: var(--color-border); border-radius: 4px; }
+::-webkit-scrollbar-thumb:hover { background: var(--color-text-muted); }
 
 ::selection {
   background: hsla(220, 70%, 45%, 0.25);

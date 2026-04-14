@@ -11,6 +11,24 @@ export function Header({ onBackToLanding }: HeaderProps) {
     const [isEditingTitle, setIsEditingTitle] = React.useState(false);
     const [titleValue, setTitleValue] = React.useState(project.title);
     const inputRef = React.useRef<HTMLInputElement>(null);
+    const [isDarkMode, setIsDarkMode] = React.useState(() => {
+        return document.documentElement.classList.contains('dark-mode');
+    });
+
+    const handleToggleDarkMode = () => {
+        const next = !isDarkMode;
+        setIsDarkMode(next);
+        document.documentElement.classList.toggle('dark-mode', next);
+        localStorage.setItem('darkMode', JSON.stringify(next));
+    };
+
+    React.useEffect(() => {
+        const saved = localStorage.getItem('darkMode');
+        if (saved === 'true') {
+            setIsDarkMode(true);
+            document.documentElement.classList.add('dark-mode');
+        }
+    }, []);
 
     React.useEffect(() => {
         setTitleValue(project.title);
@@ -110,6 +128,15 @@ export function Header({ onBackToLanding }: HeaderProps) {
                 <button className="header-button" onClick={handleExport}>
                     <span className="button-icon">📥</span>
                     Export
+                </button>
+
+                <button
+                    className="header-button dark-mode-toggle"
+                    onClick={handleToggleDarkMode}
+                    title={isDarkMode ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
+                >
+                    <span className="button-icon">{isDarkMode ? '☀️' : '🌙'}</span>
+                    {isDarkMode ? 'Light' : 'Dark'}
                 </button>
 
                 <div className="zoom-controls">
