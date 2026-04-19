@@ -70,19 +70,6 @@ const btnPrimary: React.CSSProperties = {
   transition: 'all 0.2s ease',
 };
 
-const _btnAccent: React.CSSProperties = {
-  background: `linear-gradient(135deg, ${LH.accent}, hsl(25, 95%, 55%))`,
-  color: LH.accentFg,
-  border: 'none',
-  padding: '0.75rem 1.5rem',
-  borderRadius: LH.radiusMd,
-  fontWeight: 700,
-  fontSize: '1rem',
-  fontFamily: LH.font,
-  cursor: 'pointer',
-  boxShadow: '0 4px 20px -4px hsla(15, 90%, 60%, 0.3)',
-};
-
 const btnOutline: React.CSSProperties = {
   background: 'transparent',
   color: LH.primary,
@@ -104,27 +91,6 @@ const btnGhost: React.CSSProperties = {
   fontFamily: LH.font,
   cursor: 'pointer',
   fontWeight: 600,
-};
-
-const _inputStyle: React.CSSProperties = {
-  background: LH.card,
-  border: `1px solid ${LH.border}`,
-  borderRadius: LH.radiusSm,
-  padding: '0.75rem 1rem',
-  color: LH.text,
-  fontSize: '1rem',
-  fontFamily: LH.font,
-  width: '100%',
-  outline: 'none',
-};
-
-const _labelStyle: React.CSSProperties = {
-  fontFamily: LH.font,
-  fontSize: '0.875rem',
-  fontWeight: 600,
-  color: LH.text,
-  marginBottom: '0.5rem',
-  display: 'block',
 };
 
 // ======== PAGE: LANDING PAGE ========
