@@ -5,7 +5,7 @@ import './Note.css';
 
 interface NoteProps {
     note: NoteType;
-    zoomLevel: number;
+    zoom: number;
     isSelected: boolean;
     isHovered: boolean;
     isLinkSource: boolean;
@@ -23,7 +23,7 @@ interface NoteProps {
 
 export function Note({
     note,
-    zoomLevel,
+    zoom,
     isSelected,
     isHovered,
     isLinkSource,
@@ -75,8 +75,8 @@ export function Note({
 
         const canvas = noteRef.current?.closest('.notes-canvas');
         const canvasRect = canvas?.getBoundingClientRect() || { left: 0, top: 0 };
-        const localX = (e.clientX - canvasRect.left) / zoomLevel;
-        const localY = (e.clientY - canvasRect.top) / zoomLevel;
+        const localX = (e.clientX - canvasRect.left) / zoom;
+        const localY = (e.clientY - canvasRect.top) / zoom;
 
         e.preventDefault();
         setIsDragging(true);
@@ -84,7 +84,7 @@ export function Note({
             x: localX - note.position.x,
             y: localY - note.position.y,
         });
-    }, [note.position, zoomLevel]);
+    }, [note.position, zoom]);
 
     // Handle dragging
     useEffect(() => {
@@ -93,8 +93,8 @@ export function Note({
         const handleMouseMove = (e: MouseEvent) => {
             const canvas = noteRef.current?.closest('.notes-canvas');
             const canvasRect = canvas?.getBoundingClientRect() || { left: 0, top: 0 };
-            const localX = (e.clientX - canvasRect.left) / zoomLevel;
-            const localY = (e.clientY - canvasRect.top) / zoomLevel;
+            const localX = (e.clientX - canvasRect.left) / zoom;
+            const localY = (e.clientY - canvasRect.top) / zoom;
 
             const newX = localX - dragOffset.x;
             const newY = localY - dragOffset.y;
@@ -112,7 +112,7 @@ export function Note({
             document.removeEventListener('mousemove', handleMouseMove);
             document.removeEventListener('mouseup', handleMouseUp);
         };
-    }, [isDragging, dragOffset, onPositionChange, zoomLevel]);
+    }, [isDragging, dragOffset, onPositionChange, zoom]);
 
     // Handle resizing
     const handleResizeMouseDown = useCallback((e: React.MouseEvent) => {
@@ -127,7 +127,7 @@ export function Note({
         if (!isResizing) return;
 
         const handleMouseMove = (e: MouseEvent) => {
-            const deltaX = (e.clientX - resizeStartX) / zoomLevel;
+            const deltaX = (e.clientX - resizeStartX) / zoom;
             const newWidth = Math.max(150, resizeStartWidth + deltaX);
             if (onWidthChange) {
                 onWidthChange(newWidth);
@@ -145,7 +145,7 @@ export function Note({
             document.removeEventListener('mousemove', handleMouseMove);
             document.removeEventListener('mouseup', handleMouseUp);
         };
-    }, [isResizing, resizeStartX, resizeStartWidth, zoomLevel, onWidthChange]);
+    }, [isResizing, resizeStartX, resizeStartWidth, zoom, onWidthChange]);
 
     // Handle content change with debounce
     const handleContentChange = (e: ChangeEvent<HTMLTextAreaElement>) => {

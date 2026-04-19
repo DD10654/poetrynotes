@@ -78,11 +78,17 @@ export type ProjectAction =
   | { type: 'REMOVE_CONNECTION'; payload: string }
   | { type: 'TOGGLE_NOTE_COLLAPSE'; payload: string };
 
+export interface Camera {
+  x: number;
+  y: number;
+  zoom: number;
+}
+
 // View state for UI interactions
 export interface ViewState {
   hoveredNoteId: string | null;
   selectedNoteId: string | null;
   linkingFromNoteId: string | null;
   isCreatingNote: boolean;
-  zoomLevel: number;
+  camera: Camera;
 }

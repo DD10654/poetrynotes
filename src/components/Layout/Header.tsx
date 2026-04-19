@@ -7,28 +7,14 @@ interface HeaderProps {
 }
 
 export function Header({ onBackToLanding }: HeaderProps) {
-    const { project, viewState, setViewState, dispatch, saveToLocalStorage, exportProject, hasUnsavedChanges } = useProject();
+    const { project, viewState, setViewState, dispatch, saveToLocalStorage, exportProject, hasUnsavedChanges, isDarkMode, toggleDarkMode } = useProject();
     const [isEditingTitle, setIsEditingTitle] = React.useState(false);
     const [titleValue, setTitleValue] = React.useState(project.title);
     const inputRef = React.useRef<HTMLInputElement>(null);
-    const [isDarkMode, setIsDarkMode] = React.useState(() => {
-        return document.documentElement.classList.contains('dark-mode');
-    });
 
     const handleToggleDarkMode = () => {
-        const next = !isDarkMode;
-        setIsDarkMode(next);
-        document.documentElement.classList.toggle('dark-mode', next);
-        localStorage.setItem('darkMode', JSON.stringify(next));
+        toggleDarkMode();
     };
-
-    React.useEffect(() => {
-        const saved = localStorage.getItem('darkMode');
-        if (saved === 'true') {
-            setIsDarkMode(true);
-            document.documentElement.classList.add('dark-mode');
-        }
-    }, []);
 
     React.useEffect(() => {
         setTitleValue(project.title);
@@ -75,16 +61,39 @@ export function Header({ onBackToLanding }: HeaderProps) {
         exportProject();
     };
 
+    const zoomAroundCenter = (newZoom: number) => {
+        setViewState(prev => {
+            const vw = window.innerWidth;
+            const vh = window.innerHeight - 60; // subtract header height
+            const cx = vw / 2;
+            const cy = vh / 2;
+            const worldX = cx / prev.camera.zoom + prev.camera.x;
+            const worldY = cy / prev.camera.zoom + prev.camera.y;
+            return {
+                ...prev,
+                camera: {
+                    x: worldX - cx / newZoom,
+                    y: worldY - cy / newZoom,
+                    zoom: newZoom,
+                },
+            };
+        });
+    };
+
     const handleZoomIn = () => {
-        setViewState(prev => ({ ...prev, zoomLevel: Math.min(prev.zoomLevel + 0.1, 2.0) }));
+        zoomAroundCenter(Math.min(viewState.camera.zoom + 0.1, 4.0));
     };
 
     const handleZoomOut = () => {
-        setViewState(prev => ({ ...prev, zoomLevel: Math.max(prev.zoomLevel - 0.1, 0.5) }));
+        zoomAroundCenter(Math.max(viewState.camera.zoom - 0.1, 0.2));
     };
 
     const handleZoomReset = () => {
-        setViewState(prev => ({ ...prev, zoomLevel: 1.0 }));
+        setViewState(prev => ({ ...prev, camera: { x: 0, y: 0, zoom: 1 } }));
+    };
+
+    const handleRecenter = () => {
+        setViewState(prev => ({ ...prev, camera: { ...prev.camera, x: 0, y: 0 } }));
     };
 
     return (
@@ -139,11 +148,16 @@ export function Header({ onBackToLanding }: HeaderProps) {
                     {isDarkMode ? 'Light' : 'Dark'}
                 </button>
 
+                <button className="header-button" onClick={handleRecenter} title="Recenter poem">
+                    <span className="button-icon">🎯</span>
+                    Recenter
+                </button>
+
                 <div className="zoom-controls">
                     <button className="zoom-button" onClick={handleZoomOut} title="Zoom Out">
                         −
                     </button>
-                    <span className="zoom-level">{Math.round(viewState.zoomLevel * 100)}%</span>
+                    <span className="zoom-level">{Math.round(viewState.camera.zoom * 100)}%</span>
                     <button className="zoom-button" onClick={handleZoomIn} title="Zoom In">
                         +
                     </button>

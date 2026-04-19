@@ -8,10 +8,10 @@ import './NotesCanvas.css';
 
 interface NotesCanvasProps {
     editorRef: HTMLDivElement | null;
-    zoomLevel: number;
+    camera: import('../../types').Camera;
 }
 
-export function NotesCanvas({ editorRef, zoomLevel }: NotesCanvasProps) {
+export function NotesCanvas({ editorRef, camera }: NotesCanvasProps) {
     const { project, viewState, setViewState, dispatch } = useProject();
     const canvasRef = useRef<HTMLDivElement>(null);
 
@@ -151,14 +151,14 @@ export function NotesCanvas({ editorRef, zoomLevel }: NotesCanvasProps) {
                 canvasRef={canvasRef}
                 editorRef={editorRef}
                 highlights={project.poem.highlights}
-                zoomLevel={zoomLevel}
+                zoom={camera.zoom}
             />
 
             {project.notes.map(note => (
                 <NoteComponent
                     key={note.id}
                     note={note}
-                    zoomLevel={zoomLevel}
+                    zoom={camera.zoom}
                     isSelected={viewState.selectedNoteId === note.id}
                     isHovered={viewState.hoveredNoteId === note.id}
                     isLinkSource={viewState.linkingFromNoteId === note.id}

@@ -218,9 +218,11 @@ export function PoemEditor({ onEditorRef }: PoemEditorProps) {
         // Actually the color is in the mark, but we could put it in the note too if we want the note border to match.
         // Let's assume the user just wants different colors for text highlights.
 
-        // Calculate note position
+        // Calculate note position in canvas space (divide screen-offset by zoom)
         const canvasRect = document.querySelector('.notes-panel')?.getBoundingClientRect() || null;
-        const position = calculateNewNotePosition(project.notes, selectionRect, canvasRect);
+        const rawPosition = calculateNewNotePosition(project.notes, selectionRect, canvasRect);
+        const zoom = viewState.camera.zoom;
+        const position = { x: rawPosition.x, y: rawPosition.y / zoom };
 
         // Create note
         const now = new Date().toISOString();

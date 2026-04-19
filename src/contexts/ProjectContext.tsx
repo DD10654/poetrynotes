@@ -253,6 +253,8 @@ interface ProjectContextType {
     viewState: ViewState;
     dispatch: Dispatch<ProjectAction>;
     setViewState: Dispatch<SetStateAction<ViewState>>;
+    isDarkMode: boolean;
+    toggleDarkMode: () => void;
 
     // Helper functions
     createNote: (highlightId: string, position: NotePosition) => Note;
@@ -271,7 +273,7 @@ const initialViewState: ViewState = {
     selectedNoteId: null,
     linkingFromNoteId: null,
     isCreatingNote: false,
-    zoomLevel: 1.0,
+    camera: { x: 0, y: 0, zoom: 1 },
 };
 
 interface ProjectProviderProps {
@@ -333,6 +335,25 @@ export function ProjectProvider({ children }: ProjectProviderProps) {
 
     const [viewState, setViewState] = useState<ViewState>(initialViewState);
     const [lastSavedAt, setLastSavedAt] = useState<string>(project.lastModified);
+
+    const [isDarkMode, setIsDarkMode] = useState(() => {
+        if (typeof window !== 'undefined') {
+            const saved = localStorage.getItem('darkMode');
+            if (saved !== null) {
+                return JSON.parse(saved);
+            }
+        }
+        return false;
+    });
+
+    useEffect(() => {
+        document.documentElement.classList.toggle('dark-mode', isDarkMode);
+        localStorage.setItem('darkMode', JSON.stringify(isDarkMode));
+    }, [isDarkMode]);
+
+    const toggleDarkMode = useCallback(() => {
+        setIsDarkMode(prev => !prev);
+    }, []);
 
     const hasUnsavedChanges = project.lastModified !== lastSavedAt;
 
@@ -507,6 +528,8 @@ export function ProjectProvider({ children }: ProjectProviderProps) {
         importProject,
         createNewProject,
         hasUnsavedChanges,
+        isDarkMode,
+        toggleDarkMode,
     };
 
     return (

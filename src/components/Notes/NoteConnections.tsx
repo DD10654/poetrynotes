@@ -9,7 +9,7 @@ interface NoteConnectionsProps {
     canvasRef: RefObject<HTMLDivElement | null>;
     editorRef: HTMLDivElement | null;
     highlights: Highlight[];
-    zoomLevel: number;
+    zoom: number;
 }
 
 interface Line {
@@ -56,7 +56,7 @@ function getIntersection(
     return { x, y };
 }
 
-export function NoteConnections({ notes, connections, canvasRef, highlights, zoomLevel }: NoteConnectionsProps) {
+export function NoteConnections({ notes, connections, canvasRef, highlights, zoom }: NoteConnectionsProps) {
     const [lines, setLines] = useState<Line[]>([]);
     const [dimensions, setDimensions] = useState({ width: 0, height: 0 });
 
@@ -109,8 +109,8 @@ export function NoteConnections({ notes, connections, canvasRef, highlights, zoo
                 const noteEl = document.getElementById(`note-${note.id}`);
                 const nRect = noteEl ? noteEl.getBoundingClientRect() : { width: note.width || 220, height: 100 };
 
-                const noteWidth = (note.width || nRect.width / zoomLevel);
-                const noteHeight = nRect.height / zoomLevel;
+                const noteWidth = (note.width || nRect.width / zoom);
+                const noteHeight = nRect.height / zoom;
 
                 const currentNoteRect = {
                     x: note.position.x,
@@ -159,19 +159,19 @@ export function NoteConnections({ notes, connections, canvasRef, highlights, zoo
                         const localCanvasTop = canvasRect.top;
                         const localCanvasLeft = canvasRect.left;
 
-                        const originY = (hRect.top + hRect.height / 2 - localCanvasTop) / zoomLevel;
+                        const originY = (hRect.top + hRect.height / 2 - localCanvasTop) / zoom;
 
                         // Decide whether to use left or right of the paragraph based on note position
                         const noteCenterX = note.position.x + noteWidth / 2;
-                        const highlightCenterX = (hRect.left + hRect.width / 2 - localCanvasLeft) / zoomLevel;
+                        const highlightCenterX = (hRect.left + hRect.width / 2 - localCanvasLeft) / zoom;
 
                         let originX;
                         if (noteCenterX < highlightCenterX) {
                             // Note is to the left of the highlight, start from paragraph left
-                            originX = (pRect.left - localCanvasLeft) / zoomLevel;
+                            originX = (pRect.left - localCanvasLeft) / zoom;
                         } else {
                             // Note is to the right of the highlight, start from paragraph right
-                            originX = (pRect.right - localCanvasLeft) / zoomLevel;
+                            originX = (pRect.right - localCanvasLeft) / zoom;
                         }
 
                         const intersection = getIntersection(originX, originY, currentNoteRect);
@@ -217,10 +217,10 @@ export function NoteConnections({ notes, connections, canvasRef, highlights, zoo
                     const fromRectScaled = fromNoteEl ? fromNoteEl.getBoundingClientRect() : { width: fromNote.width || 220, height: 100 };
                     const toRectScaled = toNoteEl ? toNoteEl.getBoundingClientRect() : { width: toNote.width || 220, height: 100 };
 
-                    const fromWidth = fromNote.width || (fromRectScaled.width / zoomLevel);
-                    const fromHeight = fromRectScaled.height / zoomLevel;
-                    const toWidth = toNote.width || (toRectScaled.width / zoomLevel);
-                    const toHeight = toRectScaled.height / zoomLevel;
+                    const fromWidth = fromNote.width || (fromRectScaled.width / zoom);
+                    const fromHeight = fromRectScaled.height / zoom;
+                    const toWidth = toNote.width || (toRectScaled.width / zoom);
+                    const toHeight = toRectScaled.height / zoom;
 
                     const fromRect = {
                         x: fromNote.position.x,
@@ -279,7 +279,7 @@ export function NoteConnections({ notes, connections, canvasRef, highlights, zoo
         const interval = setInterval(calculateLines, 100);
         return () => clearInterval(interval);
 
-    }, [notes, connections, canvasRef, highlights, zoomLevel]);
+    }, [notes, connections, canvasRef, highlights, zoom]);
 
     if (lines.length === 0) return null;
 
