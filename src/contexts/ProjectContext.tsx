@@ -352,7 +352,7 @@ export function ProjectProvider({ children }: ProjectProviderProps) {
     }, [isDarkMode]);
 
     const toggleDarkMode = useCallback(() => {
-        setIsDarkMode(prev => !prev);
+        setIsDarkMode((prev: boolean) => !prev);
     }, []);
 
     const hasUnsavedChanges = project.lastModified !== lastSavedAt;

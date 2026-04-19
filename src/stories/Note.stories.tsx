@@ -26,7 +26,7 @@ const meta: Meta<typeof Note> = {
   ],
   args: {
     note: baseNote,
-    zoomLevel: 1,
+    zoom: 1,
     isSelected: false,
     isHovered: false,
     isLinkSource: false,

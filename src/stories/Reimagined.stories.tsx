@@ -70,7 +70,7 @@ const btnPrimary: React.CSSProperties = {
   transition: 'all 0.2s ease',
 };
 
-const btnAccent: React.CSSProperties = {
+const _btnAccent: React.CSSProperties = {
   background: `linear-gradient(135deg, ${LH.accent}, hsl(25, 95%, 55%))`,
   color: LH.accentFg,
   border: 'none',
@@ -106,7 +106,7 @@ const btnGhost: React.CSSProperties = {
   fontWeight: 600,
 };
 
-const inputStyle: React.CSSProperties = {
+const _inputStyle: React.CSSProperties = {
   background: LH.card,
   border: `1px solid ${LH.border}`,
   borderRadius: LH.radiusSm,
@@ -118,7 +118,7 @@ const inputStyle: React.CSSProperties = {
   outline: 'none',
 };
 
-const labelStyle: React.CSSProperties = {
+const _labelStyle: React.CSSProperties = {
   fontFamily: LH.font,
   fontSize: '0.875rem',
   fontWeight: 600,
