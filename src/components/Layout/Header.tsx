@@ -7,7 +7,7 @@ interface HeaderProps {
 }
 
 export function Header({ onBackToLanding }: HeaderProps) {
-    const { project, viewState, setViewState, dispatch, saveToLocalStorage, exportProject, hasUnsavedChanges, isDarkMode, toggleDarkMode } = useProject();
+    const { project, viewState, setViewState, dispatch, saveToCloud, exportProject, hasUnsavedChanges, isDarkMode, toggleDarkMode } = useProject();
     const [isEditingTitle, setIsEditingTitle] = React.useState(false);
     const [titleValue, setTitleValue] = React.useState(project.title);
     const inputRef = React.useRef<HTMLInputElement>(null);
@@ -54,7 +54,7 @@ export function Header({ onBackToLanding }: HeaderProps) {
     };
 
     const handleSave = () => {
-        saveToLocalStorage();
+        saveToCloud();
     };
 
     const handleExport = () => {
